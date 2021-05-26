@@ -111,6 +111,7 @@ func readChangeFeed(ctx context.Context, db *sql.DB) error {
 		count++
 		if count%10 == 0 {
 			log.Printf("so far got %v", count)
+			// log.Printf("sample: %v\n", cdc)
 
 			val := CDCValue{}
 			err := json.Unmarshal([]byte(cdc.value), &val)
