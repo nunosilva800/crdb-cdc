@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -112,7 +111,6 @@ func readChangeFeed(ctx context.Context, db *sql.DB) error {
 		count++
 		if count%10 == 0 {
 			log.Printf("so far got %v", count)
-			log.Printf("sample: %v\n", cdc)
 
 			val := CDCValue{}
 			err := json.Unmarshal([]byte(cdc.value), &val)
@@ -120,7 +118,6 @@ func readChangeFeed(ctx context.Context, db *sql.DB) error {
 				return err
 			}
 			log.Println(val.After.AsEvent().String())
-
 		}
 	}
 
@@ -130,13 +127,13 @@ func readChangeFeed(ctx context.Context, db *sql.DB) error {
 type Event struct {
 	ID         string    `json:"event_id"`
 	AccountID  string    `json:"account_id"`
-	Payload    []byte    `json:"payload"`
+	Payload    string    `json:"payload"`
 	ObservedAt time.Time `json:"observed_at"`
 }
 
 func (e Event) String() string {
 	var any types.Any
-	err := proto.Unmarshal(e.Payload, &any)
+	err := proto.Unmarshal([]byte(e.Payload), &any)
 	if err != nil {
 		log.Print("error unmarshalling payload: ", err.Error())
 		return fmt.Sprintf("%v: n/a", e.ObservedAt)
@@ -169,11 +166,6 @@ type CDCValueEvent struct {
 }
 
 func (e *CDCValueEvent) AsEvent() Event {
-	b, err := base64.StdEncoding.DecodeString(e.Payload)
-	if err != nil {
-		log.Print("error decoding payload: ", err.Error())
-	}
-
 	t, err := time.Parse("2006-01-02T15:04:05.999999999", e.ObservedAt)
 	if err != nil {
 		log.Print("error convering observed at: ", err.Error())
@@ -182,7 +174,7 @@ func (e *CDCValueEvent) AsEvent() Event {
 	event := Event{
 		ID:         e.ID,
 		AccountID:  e.AccountID,
-		Payload:    b,
+		Payload:    e.Payload,
 		ObservedAt: t,
 	}
 	return event

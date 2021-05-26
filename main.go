@@ -132,7 +132,7 @@ func (l *Loader) Load(ctx context.Context, msg proto.Message) error {
 		ID:        uuid.New().String(),
 		AccountID: accountID,
 		// AccountID:  uuid.New().String(),
-		Payload:    payload,
+		Payload:    string(payload),
 		ObservedAt: time.Now(),
 	}
 
